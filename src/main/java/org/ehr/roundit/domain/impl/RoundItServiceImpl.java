@@ -3,46 +3,53 @@ package org.ehr.roundit.domain.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ehr.roundit.domain.RoundItService;
-import org.ehr.roundit.domain.adapters.AccountsAdapter;
-import org.ehr.roundit.domain.adapters.RoundItCalculator;
-import org.ehr.roundit.domain.adapters.SavingGoalsAdapter;
+import org.ehr.roundit.domain.adapters.*;
 import org.ehr.roundit.domain.entities.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class RoundItServiceImpl implements RoundItService {
-    private static final Set<AccountType> consideredAccountTypes = Set.of(AccountType.PRIMARY, AccountType.ADDITIONAL);
-
     private final AccountsAdapter accountsAdapter;
+    private final TransactionsAdapter transactionsAdapter;
     private final SavingGoalsAdapter savingGoalsAdapter;
+
+    private final TimePeriodFactory timePeriodFactory;
     private final RoundItCalculator roundItCalculator;
 
     @Override
-    public BigInteger weeklySaverForCurrency(String saverName, Currency currency) {
-        List<UserAccount> currencyAccounts = accountsAdapter.getUserAccounts().stream()
-                .filter(a -> currency.equals(a.getCurrency()))
-                .filter(a -> consideredAccountTypes.contains(a.getAccountType())).toList();
-        SavingsGoal weeklySaverGoal = savingGoalsAdapter.createSavingsGoal(saverName, currency);
-        BigInteger totalSavings = BigInteger.ZERO;
+    public BigInteger roundItAndSave(RoundItPortData roundItPortData) throws UnableToProvideDataException {
+        final String accessToken = roundItPortData.getAccessToken();
+        final String accountUid = roundItPortData.getAccountUid();
+        final String saverType = roundItPortData.getSaverType();
 
-        for (UserAccount account : currencyAccounts) {
-            CurrencyAndAmount accountBalance = accountsAdapter.getEffectiveBalance(account);
-            CurrencyAndAmount calculatedSaving = roundItCalculator.calculateTotalRoundUp(account, RoundItPeriod.LAST_WEEK);
+        UserAccount userAccount = accountsAdapter.getUserAccount(accessToken, accountUid);
+        TimePeriod timePeriod = timePeriodFactory.getTimePeriodForType(saverType);
+        List<FeedItem> settledPayments = transactionsAdapter
+                .getSettledPaymentsBetween(accessToken, accountUid, timePeriod);
 
-            BigInteger accountBalanceIfSavingsApplied = accountBalance.getMinorUnits().subtract(calculatedSaving.getMinorUnits());
-            if (accountBalanceIfSavingsApplied.compareTo(BigInteger.ZERO) >= 0) {
-                savingGoalsAdapter.addMoney(account, weeklySaverGoal, calculatedSaving);
-                totalSavings = totalSavings.add(calculatedSaving.getMinorUnits());
-            } else {
-                log.warn("Skipping weekly saver not to drive account into the negative space");
-            }
+        CurrencyAndAmount accountBalance = accountsAdapter.getEffectiveBalance(accessToken, accountUid);
+        CurrencyAndAmount projectedSavings = roundItCalculator.calculateTotalRoundUp(settledPayments);
+        boolean accountBalanceSufficient = accountBalance.getMinorUnits()
+                .compareTo(projectedSavings.getMinorUnits()) >= 0;
+
+        if (accountBalanceSufficient) {
+            String saverName = roundItPortData.getSaverType() + "_" + timePeriod.getMaxTransactionTimestamp();
+            Currency saverCurrency = userAccount.getCurrency();
+            SavingsGoal savingsGoal = savingGoalsAdapter
+                    .createSavingsGoal(accessToken, accountUid, saverName, saverCurrency);
+            savingGoalsAdapter.addMoney(accessToken, accountUid, savingsGoal, projectedSavings);
+            log.info("Account {}, saverType {}: saver {} successfully created with {} savings",
+                    accountUid, saverType, savingsGoal.getSavingsGoalUid(), projectedSavings.getMinorUnits());
+            return projectedSavings.getMinorUnits();
+        } else {
+            log.warn("Account {}, saverType {}: Skipping weekly saver not to drive account into the negative space",
+                    accountUid, saverType);
+            return BigInteger.ZERO;
         }
-        return totalSavings;
     }
 }
