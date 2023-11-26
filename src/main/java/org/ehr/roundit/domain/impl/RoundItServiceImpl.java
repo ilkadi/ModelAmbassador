@@ -31,7 +31,7 @@ public class RoundItServiceImpl implements RoundItService {
         UserAccount userAccount = accountsAdapter.getUserAccount(accessToken, accountUid);
         TimePeriod timePeriod = timePeriodFactory.getTimePeriodForType(saverType, DateTime.now());
         List<FeedItem> settledPayments = transactionsAdapter
-                .getSettledPaymentsBetween(accessToken, accountUid, timePeriod);
+                .getSettledOutPaymentsBetween(accessToken, accountUid, timePeriod);
 
         CurrencyAndAmount accountBalance = accountsAdapter.getEffectiveBalance(accessToken, accountUid);
         CurrencyAndAmount projectedSavings = roundItCalculator.calculateTotalRoundUp(userAccount, settledPayments);

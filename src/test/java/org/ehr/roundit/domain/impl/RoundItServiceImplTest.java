@@ -73,7 +73,7 @@ public class RoundItServiceImplTest {
                 .currency(testCurrency)
                 .minorUnits(new BigInteger("1000"))
                 .build();
-        when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
+        when(transactionsAdapter.getSettledOutPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
         when(roundItCalculator.calculateTotalRoundUp(primaryAccount, mockSettledPayments)).thenReturn(testSavings);
 
@@ -121,7 +121,7 @@ public class RoundItServiceImplTest {
                 .currency(testCurrency)
                 .minorUnits(new BigInteger("10000"))
                 .build();
-        when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
+        when(transactionsAdapter.getSettledOutPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
         when(roundItCalculator.calculateTotalRoundUp(primaryAccount, mockSettledPayments)).thenReturn(testSavings);
 
@@ -186,7 +186,7 @@ public class RoundItServiceImplTest {
         when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         doThrow(new UnableToProvideDataException("Kaboom!")).when(transactionsAdapter)
-                .getSettledPaymentsBetween(any(), any(), any());
+                .getSettledOutPaymentsBetween(any(), any(), any());
 
         assertThrows(UnableToProvideDataException.class, () -> roundItService.roundItAndSave(portData));
     }
@@ -214,7 +214,7 @@ public class RoundItServiceImplTest {
         when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         List<FeedItem> mockSettledPayments = List.of();
-        when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
+        when(transactionsAdapter.getSettledOutPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
         doThrow(new UnableToProvideDataException("Kaboom!")).when(accountsAdapter).getEffectiveBalance(any(), any());
 
@@ -243,7 +243,7 @@ public class RoundItServiceImplTest {
         when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         List<FeedItem> mockSettledPayments = List.of();
-        when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
+        when(transactionsAdapter.getSettledOutPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
         doThrow(new UnableToProvideDataException("Kaboom!")).when(roundItCalculator).calculateTotalRoundUp(any(), any());
 
@@ -284,7 +284,7 @@ public class RoundItServiceImplTest {
                 .currency(testCurrency)
                 .minorUnits(new BigInteger("1000"))
                 .build();
-        when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
+        when(transactionsAdapter.getSettledOutPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
         when(roundItCalculator.calculateTotalRoundUp(primaryAccount, mockSettledPayments)).thenReturn(testSavings);
 
@@ -328,7 +328,7 @@ public class RoundItServiceImplTest {
                 .currency(testCurrency)
                 .minorUnits(new BigInteger("1000"))
                 .build();
-        when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
+        when(transactionsAdapter.getSettledOutPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
         when(roundItCalculator.calculateTotalRoundUp(primaryAccount, mockSettledPayments)).thenReturn(testSavings);
 

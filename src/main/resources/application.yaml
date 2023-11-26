@@ -1,8 +1,6 @@
 server.port: 8392
 
 round-it:
-  starling-api-url: ${STARLING_API_URL}
+  starling-api-url: ${STARLING_API_URL:https://api-sandbox.starlingbank.com}
   client-id: ${CLIENT_ID:f8jcBDfBv43TCPzeDzAR}
   client-secret: ${CLIENT_SECRET:odp8OE1YudwFlAVaIRVyK91aVXEXuJzCyEkZnBVq}
-
-starling-api:
