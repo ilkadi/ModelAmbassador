@@ -37,6 +37,10 @@ Disclaimer 2: I haven't added any proper security handling for the access token,
 Currently, the port is a rest api with GET endpoint, expecting three parameters to work as on the screenshot above.
 It was easier to do with Spring then the command line application; I run out of time for proper WebMVCTest.
 
+![Balance](readme_files/balance.png)
+On the first run *OUT* transaction filter was not enabled, so the goal was not created correctly.
+On the second run the filter was put into the adapter and the calculated value was correct.
+
 ## Adapters
 Adapters use Spring's *WebClient* to call Starling API.
 They rely on a separate set of entities which in this implementation simply implements domain data interfaces.
