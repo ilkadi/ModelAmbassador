@@ -66,7 +66,7 @@ public class RoundItServiceImplTest {
                 .maxTransactionTimestamp("maxTimestamp")
                 .minTransactionTimestamp("minTimestamp")
                 .build();
-        when(timePeriodFactory.getTimePeriodForType(saverType)).thenReturn(mockPeriod);
+        when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         List<FeedItem> mockSettledPayments = List.of();
         CurrencyAndAmount testSavings = CurrencyAndAmountMock.builder()
@@ -114,7 +114,7 @@ public class RoundItServiceImplTest {
                 .maxTransactionTimestamp("maxTimestamp")
                 .minTransactionTimestamp("minTimestamp")
                 .build();
-        when(timePeriodFactory.getTimePeriodForType(saverType)).thenReturn(mockPeriod);
+        when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         List<FeedItem> mockSettledPayments = List.of();
         CurrencyAndAmount testSavings = CurrencyAndAmountMock.builder()
@@ -158,7 +158,7 @@ public class RoundItServiceImplTest {
 
         when(accountsAdapter.getUserAccount(testToken, testAccountUid)).thenReturn(primaryAccount);
         doThrow(new UnableToProvideDataException("Kaboom!")).when(timePeriodFactory)
-                .getTimePeriodForType(any());
+                .getTimePeriodForType(any(), any());
 
         assertThrows(UnableToProvideDataException.class, () -> roundItService.roundItAndSave(portData));
     }
@@ -183,7 +183,7 @@ public class RoundItServiceImplTest {
                 .maxTransactionTimestamp("maxTimestamp")
                 .minTransactionTimestamp("minTimestamp")
                 .build();
-        when(timePeriodFactory.getTimePeriodForType(saverType)).thenReturn(mockPeriod);
+        when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         doThrow(new UnableToProvideDataException("Kaboom!")).when(transactionsAdapter)
                 .getSettledPaymentsBetween(any(), any(), any());
@@ -211,7 +211,7 @@ public class RoundItServiceImplTest {
                 .maxTransactionTimestamp("maxTimestamp")
                 .minTransactionTimestamp("minTimestamp")
                 .build();
-        when(timePeriodFactory.getTimePeriodForType(saverType)).thenReturn(mockPeriod);
+        when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         List<FeedItem> mockSettledPayments = List.of();
         when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
@@ -240,7 +240,7 @@ public class RoundItServiceImplTest {
                 .maxTransactionTimestamp("maxTimestamp")
                 .minTransactionTimestamp("minTimestamp")
                 .build();
-        when(timePeriodFactory.getTimePeriodForType(saverType)).thenReturn(mockPeriod);
+        when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         List<FeedItem> mockSettledPayments = List.of();
         when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
@@ -277,7 +277,7 @@ public class RoundItServiceImplTest {
                 .maxTransactionTimestamp("maxTimestamp")
                 .minTransactionTimestamp("minTimestamp")
                 .build();
-        when(timePeriodFactory.getTimePeriodForType(saverType)).thenReturn(mockPeriod);
+        when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         List<FeedItem> mockSettledPayments = List.of();
         CurrencyAndAmount testSavings = CurrencyAndAmountMock.builder()
@@ -321,7 +321,7 @@ public class RoundItServiceImplTest {
                 .maxTransactionTimestamp("maxTimestamp")
                 .minTransactionTimestamp("minTimestamp")
                 .build();
-        when(timePeriodFactory.getTimePeriodForType(saverType)).thenReturn(mockPeriod);
+        when(timePeriodFactory.getTimePeriodForType(any(), any())).thenReturn(mockPeriod);
 
         List<FeedItem> mockSettledPayments = List.of();
         CurrencyAndAmount testSavings = CurrencyAndAmountMock.builder()

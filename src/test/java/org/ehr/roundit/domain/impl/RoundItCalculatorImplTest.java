@@ -22,14 +22,14 @@ public class RoundItCalculatorImplTest {
 
     @Test
     @DisplayName("Should return correctly rounded amount")
-    public void happyPath()  {
+    public void happyPath() {
         Currency testCurrency = Currency.GBP;
         UserAccount primaryAccount = mock(UserAccount.class);
         when(primaryAccount.getCurrency()).thenReturn(testCurrency);
 
         List<FeedItem> settledPayments = List.of(
                 FeedItemMock.builder().amount(
-                        CurrencyAndAmountMock.builder().minorUnits(new BigInteger("435")).build())
+                                CurrencyAndAmountMock.builder().minorUnits(new BigInteger("435")).build())
                         .build(),
                 FeedItemMock.builder().amount(
                                 CurrencyAndAmountMock.builder().minorUnits(new BigInteger("520")).build())
@@ -46,13 +46,12 @@ public class RoundItCalculatorImplTest {
 
     @Test
     @DisplayName("Should return zero with accounts currency if feed is empty")
-    public void unhappyPath()  {
+    public void unhappyPath() {
         Currency testCurrency = Currency.GBP;
         UserAccount primaryAccount = mock(UserAccount.class);
         when(primaryAccount.getCurrency()).thenReturn(testCurrency);
 
         List<FeedItem> settledPayments = List.of();
-
         CurrencyAndAmount projectedSavings = roundItCalculator.calculateTotalRoundUp(primaryAccount, settledPayments);
 
         assertEquals(testCurrency, projectedSavings.getCurrency());

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.ehr.roundit.domain.RoundItService;
 import org.ehr.roundit.domain.adapters.*;
 import org.ehr.roundit.domain.entities.*;
+import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
@@ -28,7 +29,7 @@ public class RoundItServiceImpl implements RoundItService {
         final String saverType = roundItPortData.getSaverType();
 
         UserAccount userAccount = accountsAdapter.getUserAccount(accessToken, accountUid);
-        TimePeriod timePeriod = timePeriodFactory.getTimePeriodForType(saverType);
+        TimePeriod timePeriod = timePeriodFactory.getTimePeriodForType(saverType, DateTime.now());
         List<FeedItem> settledPayments = transactionsAdapter
                 .getSettledPaymentsBetween(accessToken, accountUid, timePeriod);
 
