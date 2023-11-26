@@ -33,7 +33,7 @@ public class RoundItServiceImpl implements RoundItService {
                 .getSettledPaymentsBetween(accessToken, accountUid, timePeriod);
 
         CurrencyAndAmount accountBalance = accountsAdapter.getEffectiveBalance(accessToken, accountUid);
-        CurrencyAndAmount projectedSavings = roundItCalculator.calculateTotalRoundUp(settledPayments);
+        CurrencyAndAmount projectedSavings = roundItCalculator.calculateTotalRoundUp(userAccount, settledPayments);
         boolean accountBalanceSufficient = accountBalance.getMinorUnits()
                 .compareTo(projectedSavings.getMinorUnits()) >= 0;
 

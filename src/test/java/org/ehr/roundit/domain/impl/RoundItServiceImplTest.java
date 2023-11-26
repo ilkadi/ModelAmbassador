@@ -1,8 +1,5 @@
 package org.ehr.roundit.domain.impl;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
 import org.ehr.roundit.domain.RoundItService;
 import org.ehr.roundit.domain.adapters.*;
 import org.ehr.roundit.domain.entities.*;
@@ -78,7 +75,7 @@ public class RoundItServiceImplTest {
                 .build();
         when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
-        when(roundItCalculator.calculateTotalRoundUp(mockSettledPayments)).thenReturn(testSavings);
+        when(roundItCalculator.calculateTotalRoundUp(primaryAccount, mockSettledPayments)).thenReturn(testSavings);
 
         SavingsGoal savingsGoal = mock(SavingsGoal.class);
         when(savingGoalsAdapter.createSavingsGoal(any(), any(), any(), any())).thenReturn(savingsGoal);
@@ -126,7 +123,7 @@ public class RoundItServiceImplTest {
                 .build();
         when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
-        when(roundItCalculator.calculateTotalRoundUp(mockSettledPayments)).thenReturn(testSavings);
+        when(roundItCalculator.calculateTotalRoundUp(primaryAccount, mockSettledPayments)).thenReturn(testSavings);
 
         BigInteger totalSavings = roundItService.roundItAndSave(portData);
 
@@ -248,7 +245,7 @@ public class RoundItServiceImplTest {
         List<FeedItem> mockSettledPayments = List.of();
         when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
-        doThrow(new UnableToProvideDataException("Kaboom!")).when(roundItCalculator).calculateTotalRoundUp(any());
+        doThrow(new UnableToProvideDataException("Kaboom!")).when(roundItCalculator).calculateTotalRoundUp(any(), any());
 
         assertThrows(UnableToProvideDataException.class, () -> roundItService.roundItAndSave(portData));
     }
@@ -289,7 +286,7 @@ public class RoundItServiceImplTest {
                 .build();
         when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
-        when(roundItCalculator.calculateTotalRoundUp(mockSettledPayments)).thenReturn(testSavings);
+        when(roundItCalculator.calculateTotalRoundUp(primaryAccount, mockSettledPayments)).thenReturn(testSavings);
 
         doThrow(new UnableToProvideDataException("Kaboom!")).when(savingGoalsAdapter)
                 .createSavingsGoal(any(), any(), any(), any());
@@ -333,7 +330,7 @@ public class RoundItServiceImplTest {
                 .build();
         when(transactionsAdapter.getSettledPaymentsBetween(testToken, testAccountUid, mockPeriod))
                 .thenReturn(mockSettledPayments);
-        when(roundItCalculator.calculateTotalRoundUp(mockSettledPayments)).thenReturn(testSavings);
+        when(roundItCalculator.calculateTotalRoundUp(primaryAccount, mockSettledPayments)).thenReturn(testSavings);
 
         SavingsGoal savingsGoal = mock(SavingsGoal.class);
         when(savingGoalsAdapter.createSavingsGoal(any(), any(), any(), any())).thenReturn(savingsGoal);
@@ -341,13 +338,5 @@ public class RoundItServiceImplTest {
                 .addMoney(any(), any(), any(), any());
 
         assertThrows(UnableToProvideDataException.class, () -> roundItService.roundItAndSave(portData));
-    }
-
-    @Data
-    @Builder
-    @Getter
-    public static class CurrencyAndAmountMock implements CurrencyAndAmount {
-        private Currency currency;
-        private BigInteger minorUnits;
     }
 }
