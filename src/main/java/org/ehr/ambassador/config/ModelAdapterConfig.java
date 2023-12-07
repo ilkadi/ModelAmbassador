@@ -7,11 +7,18 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class ModelAdapterConfig {
-    @Value("${round-it.starling-api-url}")
-    private String starlingApiUrl;
+    public static final String URL_PORT_TEMPLATE = "%s:%s";
+
+    @Value("${model-ambassador.model-url}")
+    private String modelUrl;
+
+    @Value("${model-ambassador.model-port}")
+    private String modelPort;
 
     @Bean
-    public WebClient starlingWebClient() {
-        return WebClient.builder().baseUrl(starlingApiUrl).build();
+    public WebClient modelWebClient() {
+        return WebClient.builder().baseUrl(
+                        String.format(URL_PORT_TEMPLATE, modelUrl, modelPort))
+                .build();
     }
 }

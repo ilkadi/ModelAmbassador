@@ -1,4 +1,0 @@
-server.port: 8392
-
-model-ambassador:
-  model-url: ${MODEL_URL:http://localhost:9001}

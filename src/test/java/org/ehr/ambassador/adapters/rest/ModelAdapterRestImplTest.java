@@ -1,124 +1,93 @@
 package org.ehr.ambassador.adapters.rest;
 
-import org.ehr.ambassador.adapters.rest.entities.AccountV2;
-import org.ehr.ambassador.adapters.rest.entities.BalanceV2;
-import org.ehr.ambassador.adapters.rest.entities.CurrencyAndAmountImpl;
-import org.ehr.ambassador.domain.entities.Currency;
-import org.ehr.ambassador.domain.entities.CurrencyAndAmount;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import org.ehr.ambassador.domain.adapters.ModelAdapter;
 import org.ehr.ambassador.domain.entities.ProcessingFailedException;
-import org.ehr.ambassador.domain.entities.UserAccount;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.math.BigInteger;
+import java.io.IOException;
+import java.util.Map;
 
-import static org.ehr.ambassador.domain.entities.AccountType.ADDITIONAL;
-import static org.ehr.ambassador.domain.entities.AccountType.PRIMARY;
+import static org.ehr.ambassador.config.ModelAdapterConfig.URL_PORT_TEMPLATE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.when;
 
-/**
- * @noinspection rawtypes, unchecked
- */
-@ExtendWith(MockitoExtension.class)
 public class ModelAdapterRestImplTest {
-    // TODO use mock web server instead, cover more API response cases
 
-    @Mock
-    private WebClient webClient;
-    @Mock
-    private WebClient.RequestHeadersSpec requestHeadersMock;
-    @Mock
-    private WebClient.RequestHeadersUriSpec requestHeadersUriMock;
+    public static MockWebServer mockBackEnd;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private ModelAdapter modelAdapter;
 
-    private ModelAdapterRestImpl accountsAdapterRest;
+    @BeforeAll
+    static void setUp() throws IOException {
+        mockBackEnd = new MockWebServer();
+        mockBackEnd.start();
+    }
+
+    @AfterAll
+    static void tearDown() throws IOException {
+        mockBackEnd.shutdown();
+    }
 
     @BeforeEach
-    public void setup() {
-        reset(webClient);
-        accountsAdapterRest = new ModelAdapterRestImpl(webClient);
+    void initialize() {
+        String baseUrl = String.format(URL_PORT_TEMPLATE, "http://localhost", mockBackEnd.getPort());
+        WebClient testWebClient = WebClient.builder().baseUrl(baseUrl).build();
+        modelAdapter = new ModelAdapterRestImpl(testWebClient);
+        ReflectionTestUtils.setField(modelAdapter, "modelTimeout", 1000);
     }
 
     @Test
-    @DisplayName("Should return user account")
-    public void getAccountHappyPath() throws ProcessingFailedException {
-        String primaryAccountUid = "1";
-        AccountV2 expectedAccount = new AccountV2(primaryAccountUid, PRIMARY, "", Currency.GBP, "", "1");
-        AccountV2[] accounts = {
-                expectedAccount,
-                new AccountV2("2", ADDITIONAL, "", Currency.USD, "", "2")
-        };
+    @DisplayName("Should post body to the model and get the json body response")
+    void callOk() throws Exception {
+        Map<String, Object> modelInputData = Map.of("key-1", 100, "key-2", "hmm");
+        Map<String, Object> modelOutputData = Map.of("score", 0.873);
+        mockBackEnd.enqueue(new MockResponse()
+                .setBody(objectMapper.writeValueAsString(modelOutputData))
+                .addHeader("Content-Type", "application/json"));
 
-        when(webClient.get()).thenReturn(requestHeadersUriMock);
-        when(requestHeadersUriMock.uri("/api/v2/accounts"))
-               .thenReturn(requestHeadersMock);
-        when(requestHeadersMock.headers(any())).thenReturn(requestHeadersMock);
-        when(requestHeadersMock.exchangeToMono(any())).thenReturn(Mono.just(accounts));
+        var modelActualOutputData = modelAdapter.processWithModel(modelInputData);
 
-        UserAccount actualAccount = accountsAdapterRest.getUserAccount("token", primaryAccountUid);
-        assertEquals(expectedAccount, actualAccount);
+        RecordedRequest recordedRequest = mockBackEnd.takeRequest();
+        assertEquals("POST", recordedRequest.getMethod());
+        assertEquals("/predict", recordedRequest.getPath());
+        assertEquals(modelOutputData, modelActualOutputData);
     }
 
     @Test
-    @DisplayName("Should throw exception when fails to find correct account")
-    public void getAccountUnhappyPath() {
-        String primaryAccountUid = "1";
-        AccountV2[] accounts = {
-                new AccountV2("2", ADDITIONAL, "", Currency.USD, "", "2")
-        };
+    @DisplayName("Should throw exception if JSON header not present")
+    void noJsonBody() throws Exception {
+        Map<String, Object> modelInputData = Map.of("key-1", 100, "key-2", "hmm");
+        Map<String, Object> modelOutputData = Map.of("score", 0.873);
+        mockBackEnd.enqueue(new MockResponse()
+                .setBody(objectMapper.writeValueAsString(modelOutputData)));
 
-        when(webClient.get()).thenReturn(requestHeadersUriMock);
-        when(requestHeadersUriMock
-                .uri("/api/v2/accounts"))
-                .thenReturn(requestHeadersMock);
-        when(requestHeadersMock.headers(any())).thenReturn(requestHeadersMock);
-        when(requestHeadersMock.exchangeToMono(any())).thenReturn(Mono.just(accounts));
-
-        assertThrows(ProcessingFailedException.class,
-                () -> accountsAdapterRest.getUserAccount("token", primaryAccountUid));
+        assertThrows(ProcessingFailedException.class, () -> modelAdapter.processWithModel(modelInputData));
     }
 
     @Test
-    @DisplayName("Should return effective balance")
-    public void getBalanceHappyPath() throws ProcessingFailedException {
-        String primaryAccountUid = "1";
-        BalanceV2 expectedBalance = Mockito.mock(BalanceV2.class);
-        CurrencyAndAmountImpl expectedEffectiveBalance = new CurrencyAndAmountImpl(Currency.GBP, new BigInteger("100"));
-        when(expectedBalance.getEffectiveBalance()).thenReturn(expectedEffectiveBalance);
-
-        when(webClient.get()).thenReturn(requestHeadersUriMock);
-        when(requestHeadersUriMock.uri("/api/v2/accounts/{accountUid}/balance", primaryAccountUid))
-                .thenReturn(requestHeadersMock);
-        when(requestHeadersMock.headers(any())).thenReturn(requestHeadersMock);
-        when(requestHeadersMock.exchangeToMono(any())).thenReturn(Mono.just(expectedBalance));
-
-        CurrencyAndAmount actualAmount = accountsAdapterRest.getEffectiveBalance("token", primaryAccountUid);
-        assertEquals(expectedEffectiveBalance, actualAmount);
+    @DisplayName("Should throw exception if there is no response")
+    void shouldTimeout() {
+        Map<String, Object> modelInputData = Map.of("key-1", 100, "key-2", "hmm");
+        assertThrows(ProcessingFailedException.class, () -> modelAdapter.processWithModel(modelInputData));
     }
 
     @Test
-    @DisplayName("Should throw exception when fails to load effective balance")
-    public void getBalanceUnhappyPath() {
-        String primaryAccountUid = "1";
-        BalanceV2 expectedBalance = Mockito.mock(BalanceV2.class);
+    @DisplayName("Should throw exception if response is an error")
+    void errorModelResponse() throws Exception {
+        Map<String, Object> modelInputData = Map.of("key-1", 100, "key-2", "hmm");
+        Map<String, Object> modelOutputData = Map.of("score", 0.873);
+        mockBackEnd.enqueue(new MockResponse()
+                .setBody(objectMapper.writeValueAsString(modelOutputData))
+                .setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .addHeader("Content-Type", "application/json"));
 
-        when(webClient.get()).thenReturn(requestHeadersUriMock);
-        when(requestHeadersUriMock.uri("/api/v2/accounts/{accountUid}/balance", primaryAccountUid))
-                .thenReturn(requestHeadersMock);
-        when(requestHeadersMock.headers(any())).thenReturn(requestHeadersMock);
-        when(requestHeadersMock.exchangeToMono(any())).thenReturn(Mono.just(expectedBalance));
-
-        assertThrows(ProcessingFailedException.class,
-                () -> accountsAdapterRest.getEffectiveBalance("token", primaryAccountUid));
+        assertThrows(ProcessingFailedException.class, () -> modelAdapter.processWithModel(modelInputData));
     }
 }

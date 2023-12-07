@@ -1,0 +1,8 @@
+server.port: 8392
+
+a.b: 1000
+
+model-ambassador:
+  model-url: "http://localhost"
+  model-port: "9001"
+  model-timeout-ms: "5000"
