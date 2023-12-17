@@ -2,6 +2,8 @@
 A java spring service handling communications and security on behalf of the ML model hosted as a sidecar on the same pod.
 The service to be seen as a part of the wider ecosystem within a Kubernetes-hosted organisation.
 
+Please see the complete article on how this template application fits into the Kubernetes-based Model Platform: https://cyber-observer.blogspot.com/2023/12/neat-alternative-to-kubeflow-for-poor.html
+
 ## Context
 ![overview diagram](readme_files/model-ambassador-context.png)
 Recent surge in demand for hosting ML models challenged organisations to further evolve mindsets from SaaS (Software as a Service) to MaaS (Model as a service).
